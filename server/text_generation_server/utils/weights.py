@@ -53,7 +53,14 @@ class Weights:
         return str(filename), tensor_name
 
     def _get_slice(self, tensor_name: str):
-        filename, tensor_name = self.get_filename(tensor_name)
+        try:
+            filename, tensor_name = self.get_filename(tensor_name)
+        except RuntimeError:
+            # Hack for OPT models.
+            # Some OPT models don't have the 'model.' prefix in their weights
+            if tensor_name.startswith("model."):
+                tensor_name = tensor_name[len("model."):]
+                filename, tensor_name = self.get_filename(tensor_name)
         f = self._get_handle(filename)
         slice_ = f.get_slice(tensor_name)
         return slice_
@@ -62,7 +69,14 @@ class Weights:
         return self._get_slice(tensor_name).get_shape()
 
     def get_tensor(self, tensor_name: str):
-        filename, tensor_name = self.get_filename(tensor_name)
+        try:
+            filename, tensor_name = self.get_filename(tensor_name)
+        except RuntimeError:
+            # Hack for OPT models.
+            # Some OPT models don't have the 'model.' prefix in their weights
+            if tensor_name.startswith("model."):
+                tensor_name = tensor_name[len("model."):]
+                filename, tensor_name = self.get_filename(tensor_name)
         f = self._get_handle(filename)
         tensor = f.get_tensor(tensor_name)
         # Special case for gptq which shouldn't convert
@@ -73,7 +87,14 @@ class Weights:
         return tensor
 
     def get_partial_sharded(self, tensor_name: str, dim: int):
-        filename, tensor_name = self.get_filename(tensor_name)
+        try:
+            filename, tensor_name = self.get_filename(tensor_name)
+        except RuntimeError:
+            # Hack for OPT models.
+            # Some OPT models don't have the 'model.' prefix in their weights
+            if tensor_name.startswith("model."):
+                tensor_name = tensor_name[len("model."):]
+                filename, tensor_name = self.get_filename(tensor_name)
         world_size = self.process_group.size()
         rank = self.process_group.rank()
 
@@ -98,7 +119,14 @@ class Weights:
         return tensor
 
     def get_sharded(self, tensor_name: str, dim: int):
-        filename, tensor_name = self.get_filename(tensor_name)
+        try:
+            filename, tensor_name = self.get_filename(tensor_name)
+        except RuntimeError:
+            # Hack for OPT models.
+            # Some OPT models don't have the 'model.' prefix in their weights
+            if tensor_name.startswith("model."):
+                tensor_name = tensor_name[len("model."):]
+                filename, tensor_name = self.get_filename(tensor_name)
         f = self._get_handle(filename)
         slice_ = f.get_slice(tensor_name)
         world_size = self.process_group.size()
